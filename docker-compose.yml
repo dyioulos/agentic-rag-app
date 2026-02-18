@@ -2,7 +2,7 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "8080:8080"
+      - "0.0.0.0:8080:8080"
     depends_on:
       - backend
 
@@ -18,7 +18,7 @@ services:
       - db-data:/data
       - ./mounted-workspace:/workspace
     ports:
-      - "8000:8000"
+      - "0.0.0.0:8000:8000"
     depends_on:
       - db
 
@@ -39,7 +39,7 @@ services:
   ollama:
     image: ollama/ollama:0.5.7
     ports:
-      - "11434:11434"
+      - "0.0.0.0:11434:11434"
     volumes:
       - ollama-data:/root/.ollama
 
