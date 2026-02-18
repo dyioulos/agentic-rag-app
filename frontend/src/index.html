@@ -9,7 +9,6 @@
   <body>
     <header>
       <h1>Agentic Coding App</h1>
-      <div id="models"></div>
     </header>
     <main>
       <section class="panel">
@@ -20,12 +19,13 @@
         <select id="project"></select>
 
         <div class="upload-wrap">
-          <h3>Upload code file</h3>
-          <p class="field-help">Upload a source file for review/refactoring and create a selectable workspace entry.</p>
+          <h3>Upload code files</h3>
+          <p class="field-help">Upload one or more source files to create or extend a project workspace for comparison/refactor tasks.</p>
           <div class="row upload-row">
             <input id="uploadProjectName" placeholder="Optional project name (e.g. auth-refactor)" />
-            <input id="uploadFile" type="file" />
+            <input id="uploadFile" type="file" multiple />
           </div>
+          <p id="selectedFiles" class="field-help">No files selected yet.</p>
           <button id="uploadBtn" type="button">Upload Code</button>
           <p id="uploadStatus" class="field-help"></p>
         </div>
@@ -43,6 +43,7 @@
             <select id="deepModel"></select>
           </div>
         </div>
+        <p id="modelStatus" class="field-help"></p>
 
         <button id="runBtn">Run Agent</button>
       </section>
