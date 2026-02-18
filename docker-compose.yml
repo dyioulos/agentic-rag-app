@@ -49,3 +49,4 @@ services:
 
 volumes:
   db-data:
+  ollama-data:
