@@ -1,0 +1,48 @@
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      DB_PATH: /data/app.db
+      WORKSPACE_ROOT: /workspace
+      SHELL_ALLOWLIST: "pytest,python -m pytest,npm test,npm run test,ruff check,black --check,go test,cargo test"
+      NETWORK_ENABLED: "false"
+    volumes:
+      - db-data:/data
+      - ./mounted-workspace:/workspace
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  worker:
+    build: ./worker
+    volumes:
+      - db-data:/data
+      - ./mounted-workspace:/workspace
+    depends_on:
+      - backend
+
+  db:
+    image: alpine:3.20
+    command: ["sh", "-c", "mkdir -p /data && tail -f /dev/null"]
+    volumes:
+      - db-data:/data
+
+  ollama:
+    image: ollama/ollama:0.5.7
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+
+volumes:
+  db-data:
+  ollama-data:

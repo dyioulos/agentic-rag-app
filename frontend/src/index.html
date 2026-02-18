@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentic Coding App</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Agentic Coding App</h1>
+      <div id="models"></div>
+    </header>
+    <main>
+      <section class="panel">
+        <h2>Project Dashboard</h2>
+        <select id="project"></select>
+        <textarea id="prompt" placeholder="Describe the feature, bugfix, or refactor..."></textarea>
+        <div class="row">
+          <input id="fastModel" placeholder="Fast model (e.g. qwen2.5-coder:7b)" />
+          <input id="deepModel" placeholder="Deep model (e.g. deepseek-coder-v2)" />
+        </div>
+        <button id="runBtn">Run Agent</button>
+      </section>
+
+      <section class="panel grid-2">
+        <div>
+          <h2>Run History</h2>
+          <ul id="runs"></ul>
+        </div>
+        <div>
+          <h2>Execution Log + Plan</h2>
+          <pre id="logs"></pre>
+        </div>
+      </section>
+
+      <section class="panel grid-2">
+        <div>
+          <h2>Diff Review</h2>
+          <div id="diffs"></div>
+        </div>
+        <div>
+          <h2>Validation Output</h2>
+          <pre id="validation">Validation commands are displayed from run logs.</pre>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Language Support</h2>
+        <p>Includes first-class Pick/Basic guidance for explanation and refactoring workflows.</p>
+      </section>
+    </main>
+    <script src="./main.js"></script>
+  </body>
+</html>
