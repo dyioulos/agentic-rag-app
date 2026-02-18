@@ -3,6 +3,7 @@ import json
 import sqlite3
 import os
 import time
+import re
 from pathlib import Path
 
 import httpx
@@ -65,6 +66,25 @@ async def ollama_generate(model: str, prompt: str) -> str:
         return r.json().get("response", "")
 
 
+def parse_model_response(raw: str) -> dict:
+    text = (raw or "").strip()
+    if not text:
+        return {"edits": [], "validation_commands": [], "answer": ""}
+
+    fenced_match = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, re.DOTALL)
+    if fenced_match:
+        text = fenced_match.group(1).strip()
+
+    try:
+        parsed = json.loads(text)
+        if isinstance(parsed, dict):
+            return parsed
+    except Exception:
+        pass
+
+    return {"edits": [], "validation_commands": [], "answer": raw}
+
+
 def write_change(run_id: int, file_path: str, before: str, after: str):
     import difflib
 
@@ -99,10 +119,8 @@ async def process(run):
     raw = await ollama_generate(deep_model, prompt)
     log(run_id, "agent", "analysis generated")
 
-    try:
-        parsed = json.loads(raw)
-    except Exception:
-        parsed = {"edits": [], "validation_commands": [], "notes": raw}
+    parsed = parse_model_response(raw)
+    answer = str(parsed.get("answer") or parsed.get("notes") or "").strip()
 
     for edit in parsed.get("edits", []):
         target = (path / edit["file"]).resolve()
@@ -118,9 +136,17 @@ async def process(run):
     for cmd in parsed.get("validation_commands", []):
         log(run_id, "tool", f"validation suggested: {cmd}")
 
+    if answer:
+        log(run_id, "agent", f"answer: {answer}")
+
+    status = "awaiting_review" if parsed.get("edits") else "completed"
     with conn() as c:
-        c.execute("UPDATE runs SET status='awaiting_review', updated_at=CURRENT_TIMESTAMP WHERE id=?", (run_id,))
-    log(run_id, "system", "Run complete; awaiting file-level acceptance")
+        c.execute("UPDATE runs SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?", (status, run_id))
+
+    if status == "awaiting_review":
+        log(run_id, "system", "Run complete; awaiting file-level acceptance")
+    else:
+        log(run_id, "system", "Run complete; no file changes proposed")
 
 
 async def loop_forever():
