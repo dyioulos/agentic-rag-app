@@ -27,7 +27,6 @@ Then open:
 To make the app reachable from other workstations on your LAN, keep the published ports enabled in `docker-compose.yml` and open these ports in your host firewall:
 - `8080` (frontend UI)
 - `8000` (backend API/docs)
-- `11434` (optional, Ollama API)
 
 Then browse to `http://<host-lan-ip>:8080` from another machine.
 

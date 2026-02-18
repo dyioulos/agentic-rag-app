@@ -17,6 +17,8 @@ services:
     volumes:
       - db-data:/data
       - ./mounted-workspace:/workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "0.0.0.0:8000:8000"
     depends_on:
@@ -40,13 +42,5 @@ services:
     volumes:
       - db-data:/data
 
-  ollama:
-    image: ollama/ollama:0.5.7
-    ports:
-      - "0.0.0.0:11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-
 volumes:
   db-data:
-  ollama-data:
