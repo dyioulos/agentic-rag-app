@@ -14,6 +14,8 @@ MAX_CONTEXT_FILES = int(os.getenv("MAX_CONTEXT_FILES", "40"))
 MAX_CONTEXT_CHARS_PER_FILE = int(os.getenv("MAX_CONTEXT_CHARS_PER_FILE", "5000"))
 
 SUPPORTED_CODE_EXTENSIONS = {
+    ".b",
+    ".bas",
     ".basic",
     ".bp",
     ".c",
@@ -44,6 +46,23 @@ SUPPORTED_CODE_EXTENSIONS = {
     ".yaml",
     ".yml",
 }
+
+
+def is_probably_text(content: bytes) -> bool:
+    if not content:
+        return False
+    if b"\x00" in content:
+        return False
+
+    sample = content[:1024]
+    non_printable = sum(1 for b in sample if b < 9 or (13 < b < 32) or b == 127)
+    return (non_printable / len(sample)) < 0.30
+
+
+def should_include_file(file_path: Path, content: bytes) -> bool:
+    if file_path.suffix.lower() in SUPPORTED_CODE_EXTENSIONS:
+        return True
+    return is_probably_text(content)
 
 
 def init_db() -> None:
@@ -100,15 +119,15 @@ def build_repo_context(path: Path) -> tuple[str, list[str]]:
         if len(included) >= MAX_CONTEXT_FILES:
             break
 
-        if file_path.suffix.lower() not in SUPPORTED_CODE_EXTENSIONS:
-            continue
-
         try:
-            content = file_path.read_text(errors="ignore")
+            raw_content = file_path.read_bytes()
         except Exception:
             continue
 
-        content = content.strip()
+        if not should_include_file(file_path, raw_content):
+            continue
+
+        content = raw_content.decode("utf-8", errors="ignore").strip()
         if not content:
             continue
 

@@ -41,3 +41,30 @@ def test_build_worker_prompt_mentions_pick_basic_capability():
 
     assert "including Pick/Basic" in prompt
     assert "What does this Pick/Basic code do?" in prompt
+
+
+def test_build_repo_context_includes_bas_files(tmp_path):
+    (tmp_path / "legacy.bas").write_text('PRINT "HELLO"')
+
+    context, files = build_repo_context(tmp_path)
+
+    assert files == ["legacy.bas"]
+    assert "### FILE: legacy.bas" in context
+
+
+def test_build_repo_context_includes_extensionless_text_files(tmp_path):
+    (tmp_path / "PROGRAM").write_text('CRT "HELLO"')
+
+    context, files = build_repo_context(tmp_path)
+
+    assert files == ["PROGRAM"]
+    assert "### FILE: PROGRAM" in context
+
+
+def test_build_repo_context_skips_binary_files_without_extension(tmp_path):
+    (tmp_path / "blob").write_bytes(b"\x00\x10\x80\xff")
+
+    context, files = build_repo_context(tmp_path)
+
+    assert files == []
+    assert context == ""
