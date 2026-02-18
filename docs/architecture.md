@@ -5,7 +5,7 @@
 - **backend**: FastAPI API for model discovery, run orchestration, audit data retrieval, and change acceptance.
 - **worker**: Background agent loop polling queued runs, generating edits, and persisting diffs.
 - **db**: Lightweight persistent volume holder for SQLite database at `/data/app.db`.
-- **ollama**: Optional local inference service; backend can also target external `OLLAMA_BASE_URL`.
+- **ollama (host service)**: Existing host Ollama instance reached from containers via `OLLAMA_BASE_URL` (default `http://host.docker.internal:11434`).
 
 ## Agent loop
 1. Accept user task and selected models.
