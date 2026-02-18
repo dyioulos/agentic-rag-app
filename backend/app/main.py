@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import re
+from datetime import datetime
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
@@ -47,6 +49,38 @@ def projects():
             for p in sorted(root.iterdir())
             if p.is_dir() and not p.name.startswith(".")
         ]
+    }
+
+
+@app.post("/uploads/code")
+async def upload_code(
+    file: UploadFile = File(...),
+    project_name: str | None = Form(default=None),
+):
+    workspace_root = Path(settings.workspace_root).resolve()
+    uploads_root = workspace_root / "uploads"
+    uploads_root.mkdir(parents=True, exist_ok=True)
+
+    safe_project_name = ""
+    if project_name:
+        safe_project_name = re.sub(r"[^a-zA-Z0-9._-]", "-", project_name.strip()).strip("-")
+
+    if not safe_project_name:
+        stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        safe_project_name = f"upload-{stamp}"
+
+    project_dir = uploads_root / safe_project_name
+    project_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = Path(file.filename or "snippet.txt").name
+    target = project_dir / filename
+    content = await file.read()
+    target.write_bytes(content)
+
+    return {
+        "project_path": str(project_dir),
+        "filename": filename,
+        "size": len(content),
     }
 
 
