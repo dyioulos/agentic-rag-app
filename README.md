@@ -7,7 +7,7 @@ A local-first agentic coding platform for code generation, analysis, debugging, 
 - Full run history and audit logs in SQLite (`/data/app.db`).
 - Host-mounted project workspace at `./mounted-workspace:/workspace`.
 - Plan-first agent loop with explicit logs and diff review before acceptance.
-- In-browser code upload to seed a project workspace for review/refactoring tasks.
+- In-browser multi-file upload to seed or extend a project workspace for review/refactoring tasks.
 - Model dropdowns populated from live Ollama model inventory.
 - Tool registry with allowlisted shell commands and path-bound access controls.
 - Pick/Basic support (`.basic`, `.bp`) with dedicated prompt guidance.
@@ -40,7 +40,7 @@ Environment variables (backend):
 - `COMMAND_TIMEOUT_S` (default `120`)
 
 ## UX flow
-1. Select a mounted/uploaded project workspace (or upload a code file to create one).
+1. Select a mounted/uploaded project workspace (or upload one or more code files to create/extend one).
 2. Enter prompt and choose optional fast/deep models from dropdown lists.
 3. Run agent.
 4. Inspect plan + execution logs.

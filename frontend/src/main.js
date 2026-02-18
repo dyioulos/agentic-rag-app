@@ -46,7 +46,11 @@ function refreshModelSelects() {
 async function loadModels() {
   const data = await getJson('/models');
   availableModels = data.models || [];
-  document.getElementById('models').textContent = `Models: ${availableModels.join(', ') || 'none detected'}`;
+  const modelStatus = document.getElementById('modelStatus');
+  modelStatus.textContent =
+    availableModels.length > 0
+      ? `${availableModels.length} models detected and available in the dropdowns.`
+      : 'No models detected; worker auto-selection will be used.';
   refreshModelSelects();
 }
 
@@ -131,28 +135,39 @@ async function createRun() {
   await loadRuns();
 }
 
+function updateSelectedFilesLabel() {
+  const fileInput = document.getElementById('uploadFile');
+  const selectedFiles = document.getElementById('selectedFiles');
+  const names = Array.from(fileInput.files || []).map((file) => file.name);
+
+  selectedFiles.textContent = names.length
+    ? `Selected (${names.length}): ${names.join(', ')}`
+    : 'No files selected yet.';
+}
+
 async function uploadCode() {
   const uploadStatus = document.getElementById('uploadStatus');
   const projectName = document.getElementById('uploadProjectName').value;
   const fileInput = document.getElementById('uploadFile');
-  const file = fileInput.files[0];
+  const files = Array.from(fileInput.files || []);
 
-  if (!file) {
-    uploadStatus.textContent = 'Please choose a file to upload.';
+  if (!files.length) {
+    uploadStatus.textContent = 'Please choose one or more files to upload.';
     return;
   }
 
   const formData = new FormData();
-  formData.append('file', file);
+  files.forEach((file) => formData.append('files', file));
   if (projectName) {
     formData.append('project_name', projectName);
   }
 
-  uploadStatus.textContent = 'Uploading...';
+  uploadStatus.textContent = `Uploading ${files.length} file(s)...`;
   try {
     const result = await getJson('/uploads/code', { method: 'POST', body: formData });
-    uploadStatus.textContent = `Uploaded ${result.filename} (${result.size} bytes).`;
+    uploadStatus.textContent = `Uploaded ${result.count} file(s) (${result.total_size} bytes total).`;
     fileInput.value = '';
+    updateSelectedFilesLabel();
     await loadProjects(result.project_path);
   } catch (error) {
     uploadStatus.textContent = `Upload failed: ${error.message}`;
@@ -161,6 +176,7 @@ async function uploadCode() {
 
 document.getElementById('runBtn').onclick = createRun;
 document.getElementById('uploadBtn').onclick = uploadCode;
+document.getElementById('uploadFile').addEventListener('change', updateSelectedFilesLabel);
 
 setInterval(async () => {
   await loadRuns();
