@@ -1,4 +1,4 @@
-const apiBase = window.location.origin.replace(':8080', ':8000');
+const apiBase = `${window.location.origin}/api`;
 let activeRunId = null;
 let availableModels = [];
 
