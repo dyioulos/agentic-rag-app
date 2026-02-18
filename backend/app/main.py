@@ -37,7 +37,10 @@ def health():
 
 @app.get("/models")
 async def models():
-    return {"models": await list_models()}
+    try:
+        return {"models": await list_models()}
+    except Exception:
+        return {"models": [], "warning": "Unable to reach Ollama. Check OLLAMA_BASE_URL and Ollama availability."}
 
 
 @app.get("/projects")

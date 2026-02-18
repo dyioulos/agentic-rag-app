@@ -11,6 +11,38 @@ DB_PATH = Path("/data/app.db")
 OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
 
 
+def init_db() -> None:
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(DB_PATH) as c:
+        c.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS runs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_path TEXT NOT NULL,
+                prompt TEXT NOT NULL,
+                plan TEXT,
+                status TEXT NOT NULL DEFAULT 'queued',
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS run_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id INTEGER NOT NULL,
+                kind TEXT NOT NULL,
+                message TEXT NOT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            );
+            CREATE TABLE IF NOT EXISTS file_changes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                run_id INTEGER NOT NULL,
+                file_path TEXT NOT NULL,
+                diff TEXT NOT NULL,
+                accepted INTEGER DEFAULT 0
+            );
+            """
+        )
+
+
 def conn():
     c = sqlite3.connect(DB_PATH)
     c.row_factory = sqlite3.Row
@@ -108,5 +140,5 @@ async def loop_forever():
 
 
 if __name__ == "__main__":
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    init_db()
     asyncio.run(loop_forever())
