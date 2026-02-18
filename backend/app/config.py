@@ -16,7 +16,7 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 @dataclass(frozen=True)
 class Settings:
-    ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
+    ollama_base_url: str = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
     db_path: str = os.getenv("DB_PATH", "/data/app.db")
     workspace_root: str = os.getenv("WORKSPACE_ROOT", "/workspace")
     shell_allowlist: list[str] = field(

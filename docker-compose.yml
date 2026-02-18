@@ -9,7 +9,7 @@ services:
   backend:
     build: ./backend
     environment:
-      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
       DB_PATH: /data/app.db
       WORKSPACE_ROOT: /workspace
       SHELL_ALLOWLIST: "pytest,python -m pytest,npm test,npm run test,ruff check,black --check,go test,cargo test"
@@ -19,14 +19,20 @@ services:
       - ./mounted-workspace:/workspace
     ports:
       - "8000:8000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - db
 
   worker:
     build: ./worker
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
     volumes:
       - db-data:/data
       - ./mounted-workspace:/workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - backend
 
@@ -36,13 +42,5 @@ services:
     volumes:
       - db-data:/data
 
-  ollama:
-    image: ollama/ollama:0.5.7
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-
 volumes:
   db-data:
-  ollama-data:
