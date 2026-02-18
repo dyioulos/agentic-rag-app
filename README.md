@@ -20,6 +20,15 @@ Then open:
 - Backend API docs: http://localhost:8000/docs
 - Ollama API: provided by your host service (default backend target: `http://host.docker.internal:11434`)
 
+
+## LAN access
+To make the app reachable from other workstations on your LAN, keep the published ports enabled in `docker-compose.yml` and open these ports in your host firewall:
+- `8080` (frontend UI)
+- `8000` (backend API/docs)
+- `11434` (optional, Ollama API)
+
+Then browse to `http://<host-lan-ip>:8080` from another machine.
+
 ## Configuration
 Environment variables (backend):
 - `OLLAMA_BASE_URL` (default `http://host.docker.internal:11434`)
