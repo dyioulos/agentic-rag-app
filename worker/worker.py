@@ -1,15 +1,49 @@
 import asyncio
 import json
-import sqlite3
 import os
-import time
 import re
+import sqlite3
+import time
 from pathlib import Path
 
 import httpx
 
 DB_PATH = Path("/data/app.db")
 OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
+MAX_CONTEXT_FILES = int(os.getenv("MAX_CONTEXT_FILES", "40"))
+MAX_CONTEXT_CHARS_PER_FILE = int(os.getenv("MAX_CONTEXT_CHARS_PER_FILE", "5000"))
+
+SUPPORTED_CODE_EXTENSIONS = {
+    ".basic",
+    ".bp",
+    ".c",
+    ".cc",
+    ".cpp",
+    ".cs",
+    ".go",
+    ".h",
+    ".hpp",
+    ".java",
+    ".js",
+    ".json",
+    ".kt",
+    ".lua",
+    ".md",
+    ".php",
+    ".py",
+    ".rb",
+    ".rs",
+    ".scala",
+    ".sh",
+    ".sql",
+    ".swift",
+    ".ts",
+    ".tsx",
+    ".txt",
+    ".xml",
+    ".yaml",
+    ".yml",
+}
 
 
 def init_db() -> None:
@@ -54,6 +88,62 @@ def log(run_id: int, kind: str, msg: str):
     with conn() as c:
         c.execute("INSERT INTO run_logs(run_id,kind,message) VALUES(?,?,?)", (run_id, kind, msg))
         c.execute("UPDATE runs SET updated_at=CURRENT_TIMESTAMP WHERE id=?", (run_id,))
+
+
+def build_repo_context(path: Path) -> tuple[str, list[str]]:
+    files = [p for p in sorted(path.glob("**/*")) if p.is_file()]
+    included: list[str] = []
+    chunks: list[str] = []
+
+    for file_path in files:
+        relative = file_path.relative_to(path)
+        if len(included) >= MAX_CONTEXT_FILES:
+            break
+
+        if file_path.suffix.lower() not in SUPPORTED_CODE_EXTENSIONS:
+            continue
+
+        try:
+            content = file_path.read_text(errors="ignore")
+        except Exception:
+            continue
+
+        content = content.strip()
+        if not content:
+            continue
+
+        if len(content) > MAX_CONTEXT_CHARS_PER_FILE:
+            content = f"{content[:MAX_CONTEXT_CHARS_PER_FILE]}\n\n...[truncated]"
+
+        included.append(str(relative))
+        chunks.append(f"### FILE: {relative}\n{content}")
+
+    return "\n\n".join(chunks), included
+
+
+def build_worker_prompt(task_prompt: str, repo_context: str, included_files: list[str]) -> str:
+    capabilities = (
+        "You are a coding specialist optimized for code generation, code analysis/comprehension, "
+        "debugging/root-cause analysis, refactoring, and test generation/validation across "
+        "multiple languages including Pick/Basic."
+    )
+    instructions = (
+        "Focus on technical correctness. If the task asks what code does, explain intent, input/output, "
+        "data flow, and edge cases. Cite concrete details from the provided files. "
+        "When evidence is incomplete, say what is uncertain instead of guessing."
+    )
+
+    return (
+        f"{capabilities}\n"
+        f"Task: {task_prompt}\n"
+        f"Included files ({len(included_files)}): {', '.join(included_files) if included_files else 'none'}\n\n"
+        f"{instructions}\n\n"
+        "Return a single JSON object with keys:\n"
+        "- edits: list of {file, content} for full-file replacements (or [] if no edits are needed)\n"
+        "- validation_commands: list of commands to validate changes\n"
+        "- answer: concise response to the user\n\n"
+        f"Repository context:\n{repo_context or '[No readable code files found]'}"
+    )
 
 
 async def ollama_generate(model: str, prompt: str) -> str:
@@ -107,15 +197,11 @@ async def process(run):
     fast_model = payload.get("fast_model") or "qwen2.5-coder:7b"
     deep_model = payload.get("deep_model") or fast_model
 
-    log(run_id, "plan", "1) Inspect repo 2) propose edit 3) validate 4) show diff")
-    files = [p for p in path.glob("**/*") if p.is_file()][:25]
-    context = "\n".join([f"{f.relative_to(path)}" for f in files])
-    log(run_id, "tool", f"scanned {len(files)} files")
+    log(run_id, "plan", "1) Inspect files+content 2) reason about task 3) propose edits 4) suggest validation")
+    context, included_files = build_repo_context(path)
+    log(run_id, "tool", f"loaded {len(included_files)} files into model context")
 
-    prompt = (
-        f"Task: {run['prompt']}\nFiles:\n{context}\n"
-        "Return JSON object with key edits as list of {file,content} and validation_commands list."
-    )
+    prompt = build_worker_prompt(run["prompt"], context, included_files)
     raw = await ollama_generate(deep_model, prompt)
     log(run_id, "agent", "analysis generated")
 
