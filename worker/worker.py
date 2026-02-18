@@ -1,13 +1,14 @@
 import asyncio
 import json
 import sqlite3
+import os
 import time
 from pathlib import Path
 
 import httpx
 
 DB_PATH = Path("/data/app.db")
-OLLAMA_URL = "http://ollama:11434"
+OLLAMA_URL = os.getenv("OLLAMA_BASE_URL", "http://host.docker.internal:11434")
 
 
 def conn():
