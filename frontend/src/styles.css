@@ -45,6 +45,18 @@ main {
   gap: 1rem;
 }
 
+label {
+  display: block;
+  margin-top: 0.75rem;
+  font-weight: 600;
+}
+
+.field-help {
+  color: var(--muted);
+  margin: 0.25rem 0 0.1rem;
+  font-size: 0.92rem;
+}
+
 textarea,
 input,
 select,
@@ -63,6 +75,22 @@ button {
   color: #00122b;
   font-weight: 700;
   cursor: pointer;
+}
+
+.upload-wrap {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #2d3445;
+  border-radius: 8px;
+  background: #111624;
+}
+
+.upload-wrap h3 {
+  margin: 0;
+}
+
+.upload-row {
+  align-items: center;
 }
 
 .row {

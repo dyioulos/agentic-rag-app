@@ -14,12 +14,36 @@
     <main>
       <section class="panel">
         <h2>Project Dashboard</h2>
+
+        <label for="project">Project workspace</label>
+        <p class="field-help">Choose a mounted project folder or upload code below to create one.</p>
         <select id="project"></select>
-        <textarea id="prompt" placeholder="Describe the feature, bugfix, or refactor..."></textarea>
-        <div class="row">
-          <input id="fastModel" placeholder="Fast model (e.g. qwen2.5-coder:7b)" />
-          <input id="deepModel" placeholder="Deep model (e.g. deepseek-coder-v2)" />
+
+        <div class="upload-wrap">
+          <h3>Upload code file</h3>
+          <p class="field-help">Upload a source file for review/refactoring and create a selectable workspace entry.</p>
+          <div class="row upload-row">
+            <input id="uploadProjectName" placeholder="Optional project name (e.g. auth-refactor)" />
+            <input id="uploadFile" type="file" />
+          </div>
+          <button id="uploadBtn" type="button">Upload Code</button>
+          <p id="uploadStatus" class="field-help"></p>
         </div>
+
+        <label for="prompt">Task prompt</label>
+        <textarea id="prompt" placeholder="Describe the feature, bugfix, or refactor..."></textarea>
+
+        <div class="row">
+          <div>
+            <label for="fastModel">Fast model</label>
+            <select id="fastModel"></select>
+          </div>
+          <div>
+            <label for="deepModel">Deep model</label>
+            <select id="deepModel"></select>
+          </div>
+        </div>
+
         <button id="runBtn">Run Agent</button>
       </section>
 
