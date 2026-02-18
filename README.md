@@ -10,7 +10,7 @@ A local-first agentic coding platform for code generation, analysis, debugging, 
 - In-browser multi-file upload to seed or extend a project workspace for review/refactoring tasks.
 - Model dropdowns populated from live Ollama model inventory.
 - Tool registry with allowlisted shell commands and path-bound access controls.
-- Pick/Basic support (`.basic`, `.bp`) with dedicated prompt guidance.
+- Pick/Basic support (`.basic`, `.bp`) with dedicated prompt guidance and file-content-aware context for better comprehension answers.
 
 ## Quick start
 ```bash
